@@ -232,8 +232,33 @@ class Game2048Env(gym.Env):
         return not np.array_equal(self.board, temp_board)
 
 def get_action(state, score):
+    # 初始化 MCTS 環境
     env = Game2048Env()
-    return random.choice([0, 1, 2, 3]) # Choose a random action
+    env.board = state.copy()
+    env.score = score
+
+    # 建立 root node
+    root = PUCTNode(state=state, score=score)
+
+    # 建立 MCTS_PUCT agent（你應該已經在主程式中定義好 approximator & policy_approximator）
+    mcts = MCTS_PUCT(
+        env=env,
+        value_approximator=approximator,
+        policy_approximator=policy_approximator,
+        iterations=50,
+        c_puct=1.41,
+        rollout_depth=10,
+        gamma=0.99
+    )
+
+    # 執行多次模擬
+    for _ in range(mcts.iterations):
+        mcts.run_simulation(root)
+
+    # 回傳最佳動作
+    best_action, _ = mcts.best_action_distribution(root)
+    return best_action
+
     
     # You can submit this random agent to evaluate the performance of a purely random strategy.
 
